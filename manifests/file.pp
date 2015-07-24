@@ -25,6 +25,13 @@ define staging::file (
   $subdir      = $caller_module_name
 ) {
 
+  # somehow $replace ends up "", which is not valid, but we can assume is false
+  if $replace {
+    $_replace = true
+  } else {
+    $_replace = false
+  }
+
   include staging
 
   $quoted_source = shellquote($source)
@@ -81,27 +88,27 @@ define staging::file (
     /^\//: {
       file { $target_file:
         source  => $source,
-        replace => $replace,
+        replace => $_replace,
       }
     }
     /^[A-Za-z]:/: {
       if versioncmp($::puppetversion, '3.4.0') >= 0 {
         file { $target_file:
           source             => $source,
-          replace            => $replace,
+          replace            => $_replace,
           source_permissions => ignore,
         }
       } else {
         file { $target_file:
           source  => $source,
-          replace => $replace,
+          replace => $_replace,
         }
       }
     }
     /^puppet:\/\//: {
       file { $target_file:
         source  => $source,
-        replace => $replace,
+        replace => $_replace,
       }
     }
     /^http:\/\//: {

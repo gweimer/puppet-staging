@@ -56,7 +56,7 @@ define staging::extract (
   } elsif $replace {
     # replace with newer copy
     $_creates = undef
-    $_unless  = "test ${creates_path} -nt ${source}"
+    $_unless  = "test ${creates_path} -nt ${source_path}"
   } else {
     # only run if it doesn't exist yet (the default)
     $_creates = $creates_path
