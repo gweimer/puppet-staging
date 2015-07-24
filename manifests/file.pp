@@ -21,6 +21,7 @@ define staging::file (
   $wget_option = undef, #: options to pass to wget
   $tries       = undef, #: amount of retries for the file transfer when non transient connection errors exist
   $try_sleep   = undef, #: time to wait between retries for the file transfer
+  $replace     = false, #: replace existing file with update if true (only works for puppet & local sources)
   $subdir      = $caller_module_name
 ) {
 
@@ -80,27 +81,27 @@ define staging::file (
     /^\//: {
       file { $target_file:
         source  => $source,
-        replace => false,
+        replace => $replace,
       }
     }
     /^[A-Za-z]:/: {
       if versioncmp($::puppetversion, '3.4.0') >= 0 {
         file { $target_file:
           source             => $source,
-          replace            => false,
+          replace            => $replace,
           source_permissions => ignore,
         }
       } else {
         file { $target_file:
           source  => $source,
-          replace => false,
+          replace => $replace,
         }
       }
     }
     /^puppet:\/\//: {
       file { $target_file:
         source  => $source,
-        replace => false,
+        replace => $replace,
       }
     }
     /^http:\/\//: {

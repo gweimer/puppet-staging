@@ -9,6 +9,7 @@ define staging::extract (
   $group       = undef, #:  extract file as this group.
   $environment = undef, #: environment variables.
   $strip       = undef, #: extract file with the --strip=X option. Only works with GNU tar.
+  $replace     = undef, #: replace with update if true
   $subdir      = $caller_module_name #: subdir per module in staging directory.
 ) {
 
@@ -20,21 +21,46 @@ define staging::extract (
     $source_path = "${staging::path}/${subdir}/${name}"
   }
 
-  # Use user supplied creates path, set default value if creates, unless or
-  # onlyif is not supplied.
+  # Use user supplied creates path, else set default value
   if $creates {
     $creates_path = $creates
-  } elsif ! ($unless or $onlyif) {
+  } else {
     if $name =~ /.tar.gz$/ {
       $folder       = staging_parse($name, 'basename', '.tar.gz')
+    } elsif $name =~ /.tgz$/ {
+      $folder       = staging_parse($name, 'basename', '.tgz')
+    } elsif $name =~ /.tar$/ {
+      $folder       = staging_parse($name, 'basename', '.tar')
     } elsif $name =~ /.tar.bz2$/ {
       $folder       = staging_parse($name, 'basename', '.tar.bz2')
+    } elsif $name =~ /.tbz2$/ {
+      $folder       = staging_parse($name, 'basename', '.tbz2')
+    } elsif $name =~ /.war$/ {
+      $folder       = staging_parse($name, 'basename', '.war')
+    } elsif $name =~ /.jar$/ {
+      $folder       = staging_parse($name, 'basename', '.jar')
+    } elsif $name =~ /.zip$/ {
+      $folder       = staging_parse($name, 'basename', '.zip')
+    } elsif $name =~ /.deb$/ {
+      $folder       = staging_parse($name, 'basename', '.deb')
     } else {
       $folder       = staging_parse($name, 'basename')
     }
     $creates_path = "${target}/${folder}"
+  }
+
+  # If provided, use unless or onlyif, else provide defaults
+  if $unless or $onlyif {
+    $_creates = $creates
+    $_unless  = $unless
+  } elsif $replace {
+    # replace with newer copy
+    $_creates = undef
+    $_unless  = "test ${creates_path} -nt ${source}"
   } else {
-    $creates_path = undef
+    # only run if it doesn't exist yet (the default)
+    $_creates = $creates_path
+    $_unless  = undef
   }
 
   if scope_defaults('Exec','path') {
@@ -43,8 +69,8 @@ define staging::extract (
       user        => $user,
       group       => $group,
       environment => $environment,
-      creates     => $creates_path,
-      unless      => $unless,
+      creates     => $_creates,
+      unless      => $_unless,
       onlyif      => $onlyif,
       logoutput   => on_failure,
     }
@@ -55,8 +81,8 @@ define staging::extract (
       user        => $user,
       group       => $group,
       environment => $environment,
-      creates     => $creates_path,
-      unless      => $unless,
+      creates     => $_creates,
+      unless      => $_unless,
       onlyif      => $onlyif,
       logoutput   => on_failure,
     }
