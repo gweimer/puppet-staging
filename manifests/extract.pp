@@ -53,14 +53,17 @@ define staging::extract (
   if $unless or $onlyif {
     $_creates = $creates
     $_unless  = $unless
+    $touch    = ""
   } elsif $replace {
     # replace with newer copy
     $_creates = undef
     $_unless  = "test ${creates_path} -nt ${source_path}"
+    $touch    = "; touch ${creates_path}"
   } else {
     # only run if it doesn't exist yet (the default)
     $_creates = $creates_path
     $_unless  = undef
+    $touch    = ""
   }
 
   if scope_defaults('Exec','path') {
@@ -138,6 +141,6 @@ define staging::extract (
   }
 
   exec { "extract ${name}":
-    command => $command,
+    command => "${command} ${touch}",
   }
 }
